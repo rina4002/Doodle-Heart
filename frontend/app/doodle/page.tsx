@@ -28,7 +28,8 @@ export default function DoodlePage() {
     const imageData = canvasRef.current.toDataURL("image/png");
 
     try {
-      const response = await fetch("http://localhost:8000/ask-image", {
+      const response = await fetch("/api/doodle", {
+        // const response = await fetch("http://localhost:8000/ask-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
