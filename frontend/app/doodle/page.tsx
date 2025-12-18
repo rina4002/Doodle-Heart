@@ -1,49 +1,50 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useRef, useEffect, useState } from "react";
+import axios from "axios";
+
 const COLORS = [
-  { name: 'Black', hex: '#000000' },
-  { name: 'Red', hex: '#FF0000' },
-  { name: 'Blue', hex: '#0000FF' },
-  { name: 'Green', hex: '#008000' },
-  { name: 'Eraser', hex: '#FFFFFF' }, // Just drawing in white, like a ghost
+  { name: "Black", hex: "#000000" },
+  { name: "Red", hex: "#FF0000" },
+  { name: "Blue", hex: "#0000FF" },
+  { name: "Green", hex: "#008000" },
+  { name: "Eraser", hex: "#FFFFFF" }, // Just drawing in white, like a ghost
 ];
 
 export default function DoodlePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#000000');
+  const [color, setColor] = useState("#000000");
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const sendToAI = async () => {
-  if (!canvasRef.current) return;
+    if (!canvasRef.current) return;
 
-  setIsAnalyzing(true);
-  
-  // 1. Convert the canvas to a Data URL (base64 string)
-  // This is basically taking a digital Polaroid of your mess.
-  const imageData = canvasRef.current.toDataURL('image/png');
+    setIsAnalyzing(true);
 
-  try {
-    const response = await fetch('http://localhost:8000/ask-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        text: "Analyze this drawing and its made by a kid, so now tell me how that kid might be feeling. Also give a json string array of what is drawn.",
-        image: imageData // We'll update the backend to handle this next
-      }),
-    });
+    // 1. Convert the canvas to a Data URL (base64 string)
+    // This is basically taking a digital Polaroid of your mess.
+    const imageData = canvasRef.current.toDataURL("image/png");
 
-    const data = await response.json();
-    alert("AI says: " + data.response);
-  } catch (error) {
-    console.error("The AI is ignoring you:", error);
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+    try {
+      const response = await fetch("http://localhost:8000/ask-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: "Analyze this drawing and its made by a kid, so now tell me how that kid might be feeling. Also give a json string array of what is drawn.",
+          image: imageData, // We'll update the backend to handle this next
+        }),
+      });
+
+      const data = await response.json();
+      alert("AI says: " + data.response);
+    } catch (error) {
+      console.error("The AI is ignoring you:", error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -52,9 +53,9 @@ export default function DoodlePage() {
     canvas.width = window.innerWidth - 80;
     canvas.height = window.innerHeight;
 
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext("2d");
     if (context) {
-      context.lineCap = 'round';
+      context.lineCap = "round";
       context.lineWidth = 5; // Slightly thicker so the eraser actually works
       setCtx(context);
     }
@@ -66,7 +67,7 @@ export default function DoodlePage() {
     ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     ctx.strokeStyle = color;
     // If it's white, make it thicker so erasing isn't a chore
-    ctx.lineWidth = color === '#FFFFFF' ? 20 : 5; 
+    ctx.lineWidth = color === "#FFFFFF" ? 20 : 5;
     setIsDrawing(true);
   };
 
@@ -96,29 +97,35 @@ export default function DoodlePage() {
             key={c.hex}
             onClick={() => setColor(c.hex)}
             className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-all ${
-              color === c.hex ? 'border-black scale-110 shadow-md' : 'border-gray-200'
+              color === c.hex
+                ? "border-black scale-110 shadow-md"
+                : "border-gray-200"
             }`}
             style={{ backgroundColor: c.hex }}
             title={c.name}
           >
-            {c.name === 'Eraser' && <span className="text-[10px] font-bold text-gray-400">ERASER</span>}
+            {c.name === "Eraser" && (
+              <span className="text-[10px] font-bold text-gray-400">
+                ERASER
+              </span>
+            )}
           </button>
         ))}
 
-        <button 
+        <button
           onClick={clearCanvas}
           className="mt-10 p-2 text-[10px] bg-red-100 text-red-600 rounded hover:bg-red-200 font-bold uppercase"
         >
           Nuke It
         </button>
 
-        <button 
-  onClick={sendToAI}
-  disabled={isAnalyzing}
-  className="mt-4 p-2 text-[10px] bg-blue-100 text-blue-600 rounded hover:bg-blue-200 font-bold uppercase disabled:opacity-50"
->
-  {isAnalyzing ? 'Thinking...' : 'Analyze'}
-</button>
+        <button
+          onClick={sendToAI}
+          disabled={isAnalyzing}
+          className="mt-4 p-2 text-[10px] bg-blue-100 text-blue-600 rounded hover:bg-blue-200 font-bold uppercase disabled:opacity-50"
+        >
+          {isAnalyzing ? "Thinking..." : "Analyze"}
+        </button>
       </div>
 
       <canvas
