@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Mapping the microservice response fields to your Schema
     const newDoodle = await Doodle.create({
       image: image,
-      analysis: aiData.feeling, // Adjust these keys based on what your Python/service returns
+      analysis: aiData.feeling, // Matches Python return
       tags: aiData.items,
     });
 
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
+        response: aiData.feeling, // Add this so the frontend sees 'data.response'
         data: newDoodle,
       },
       { status: 201 }

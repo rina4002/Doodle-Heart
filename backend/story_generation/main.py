@@ -46,19 +46,30 @@ async def ask_gemini(prompt: ImagePrompt):
         # We use gemini-2.0-flash because it's great at vision (when you have quota)
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=[
+            # contents=[
+            #     prompt.text,
+            #     types.Part.from_bytes(
+            #         data=base64.b64decode(encoded),
+            #         mime_type="image/png"
+            #     )
+            # ]
+                        contents=[
                 prompt.text,
                 types.Part.from_bytes(
                     data=base64.b64decode(encoded),
                     mime_type="image/png"
                 )
             ]
+
         )
-        return {"response": response.text}
-        
+        # return {"response": response.text}
+        # For now, let's just return the raw text to keep it simple
+        return {"feeling": response.text, "items": []}
+
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/ask")
 async def ask_gemini(prompt: Prompt):
