@@ -22,9 +22,6 @@ export default function DoodlePage() {
     if (!canvasRef.current) return;
 
     setIsAnalyzing(true);
-
-    // 1. Convert the canvas to a Data URL (base64 string)
-    // This is basically taking a digital Polaroid of your mess.
     const imageData = canvasRef.current.toDataURL("image/png");
 
     try {
