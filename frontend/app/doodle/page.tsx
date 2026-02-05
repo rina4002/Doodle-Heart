@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import axios from "axios";
 
 const COLORS = [
   { name: "Black", hex: "#000000" },
@@ -11,33 +10,48 @@ const COLORS = [
   { name: "Eraser", hex: "#FFFFFF" }, // Just drawing in white, like a ghost
 ];
 
+interface DoodleAnalysis {
+  analysis: string;
+  mood: string;
+  sentimentScore?: number;
+  colors?: string[];
+  tags?: string[];
+}
+
 export default function DoodlePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#000000");
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [analysisData, setAnalysisData] = useState<DoodleAnalysis | null>(null);
+  
   const sendToAI = async () => {
     if (!canvasRef.current) return;
 
     setIsAnalyzing(true);
+    setIsModalOpen(true); 
+
     const imageData = canvasRef.current.toDataURL("image/png");
 
     try {
       const response = await fetch("/api/doodle", {
-        // const response = await fetch("http://localhost:8000/ask-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: "Analyze this drawing and its made by a kid, so now tell me how that kid might be feeling. Also give a json string array of what is drawn.",
+          guestId: localStorage.getItem("doodle_guest_id"),
           image: imageData, // We'll update the backend to handle this next
         }),
       });
 
-      const data = await response.json();
-      alert("AI says: " + data.response);
-    } catch (error) {
+const result = await response.json();
+    if (result.success) {
+      setAnalysisData(result.data); // result.data contains mood, analysis, etc.
+    } else {
+      // Handle the 429 error or other issues
+      setAnalysisData({ analysis: "Oh no! The Magic Sun is tired. Try again later!", mood: "Sleepy" });
+    }    } catch (error) {
       console.error("The AI is ignoring you:", error);
     } finally {
       setIsAnalyzing(false);
@@ -96,7 +110,7 @@ export default function DoodlePage() {
             onClick={() => setColor(c.hex)}
             className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-all ${
               color === c.hex
-                ? "border-black scale-110 shadow-md"
+                ? "border-black scale-1 10 shadow-md"
                 : "border-gray-200"
             }`}
             style={{ backgroundColor: c.hex }}
@@ -134,6 +148,66 @@ export default function DoodlePage() {
         onMouseLeave={stopDrawing}
         className="cursor-crosshair bg-white"
       />
+      {/* THE AI DISPLAY STUFF */}
+    <FancyResultBox 
+      isOpen={isModalOpen}
+      isAnalyzing={isAnalyzing}
+      data={analysisData}
+      onClose={() => setIsModalOpen(false)}
+    />
     </div>
   );
 }
+
+const FancyResultBox = ({ isOpen, isAnalyzing, data, onClose }: any) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/20 backdrop-blur-md">
+      <div className="bg-white rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] w-full max-w-lg border-[12px] border-yellow-400 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
+        <div className="p-10 flex flex-col items-center text-center">
+          
+          {isAnalyzing ? (
+            <>
+              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center animate-bounce mb-6">
+                <span className="text-5xl">✨</span>
+              </div>
+              <h2 className="text-3xl font-black text-blue-600 italic">Thinking...</h2>
+              <p className="text-gray-400 mt-2 font-bold uppercase tracking-widest">The AI is looking at your art!</p>
+            </>
+          ) : (
+            <>
+              <div className="w-full flex justify-between items-center mb-6">
+                <span className="text-4xl">🌟</span>
+                <h2 className="text-4xl font-black text-purple-600 uppercase tracking-tighter">Result!</h2>
+                <span className="text-4xl">🌟</span>
+              </div>
+
+              <div className="bg-yellow-50 rounded-3xl p-6 border-4 border-dashed border-yellow-200 mb-6">
+                <p className="text-xl font-medium text-gray-800 leading-tight">
+                  "{data?.analysis}"
+                </p>
+              </div>
+
+              <div className="flex gap-4 mb-8">
+                <div className="bg-pink-500 text-white px-6 py-2 rounded-full font-black text-sm shadow-lg">
+                  MOOD: {data?.mood?.toUpperCase()}
+                </div>
+                <div className="bg-green-500 text-white px-6 py-2 rounded-full font-black text-sm shadow-lg">
+                  KID SCORE: ✨ 10/10
+                </div>
+              </div>
+
+              <button
+                onClick={onClose}
+                className="w-full py-5 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-2xl text-2xl transition-all shadow-[0_8px_0_rgb(29,78,216)] active:shadow-none active:translate-y-2"
+              >
+                COOL!
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
