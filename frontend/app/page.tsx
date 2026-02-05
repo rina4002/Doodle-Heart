@@ -27,7 +27,7 @@ export default function LandingPage() {
       Icon: BarChart3,
       bgColor: "bg-blue-100",
       iconColor: "text-blue-600",
-      link: "/insights"
+      link: "/dashboard"
     },
   ];
 
@@ -44,10 +44,10 @@ export default function LandingPage() {
             listens to their imagination, and gives you the insights to watch them grow.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/draw" className="px-8 py-4 bg-pink-600 text-white rounded-full font-bold text-lg hover:bg-pink-700 transition-all shadow-lg shadow-pink-200">
+            <Link href="/doodle" className="px-8 py-4 bg-pink-600 text-white rounded-full font-bold text-lg hover:bg-pink-700 transition-all shadow-lg shadow-pink-200">
               Start Doodling
             </Link>
-            <Link href="/parent-dashboard" className="px-8 py-4 bg-white border-2 border-zinc-200 rounded-full font-bold text-lg hover:border-pink-300 transition-all">
+            <Link href="/dashboard" className="px-8 py-4 bg-white border-2 border-zinc-200 rounded-full font-bold text-lg hover:border-pink-300 transition-all">
               Parent Dashboard
             </Link>
           </div>
