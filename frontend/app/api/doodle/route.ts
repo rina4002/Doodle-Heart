@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import connectDB from "@/db"; 
-import Doodle from "@/models/Doodle";
+import Doodle from "@/db/models/Doodle";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { text, image, guestId } = await req.json();
-
+    const { image, guestId } = await req.json(); // 1. Grab guestId from frontend
+    console.log("📥 RECEIVED FROM FRONTEND:", {
+      guestId: guestId,
+      imagePreview: image?.substring(0, 30) + "..."
+    });
     if (!image) throw new Error("Image is required for analysis");
 
     // 1. Initialize Gemini Model

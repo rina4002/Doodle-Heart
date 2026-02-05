@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import connectDB from "@/db";
-import Doodle from "@/models/Doodle";
+import Doodle from "@/db/models/Doodle";
 import mongoose from "mongoose";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/db";
-import Doodle from "@/models/Doodle";
+import Doodle from "@/db/models/Doodle";
 
 export async function GET(req: NextRequest) {
   try {

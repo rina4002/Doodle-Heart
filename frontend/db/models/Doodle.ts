@@ -23,4 +23,7 @@ const DoodleSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+if (mongoose.models.Doodle) {
+  delete mongoose.models.Doodle;
+}
 export default mongoose.models.Doodle || mongoose.model("Doodle", DoodleSchema);

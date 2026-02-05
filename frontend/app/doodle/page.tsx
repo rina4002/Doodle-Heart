@@ -1,5 +1,6 @@
 "use client";
 
+import { getOrSetGuestId } from "@/lib/auth-utils";
 import React, { useRef, useEffect, useState } from "react";
 
 const COLORS = [
@@ -10,6 +11,8 @@ const COLORS = [
   { name: "Eraser", hex: "#FFFFFF" }, // Just drawing in white, like a ghost
 ];
 
+// --- TYPES & INTERFACES ---
+
 interface DoodleAnalysis {
   analysis: string;
   mood: string;
@@ -19,6 +22,7 @@ interface DoodleAnalysis {
 }
 
 export default function DoodlePage() {
+  // --- STATE & REFS ---
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#000000");
@@ -27,6 +31,7 @@ export default function DoodlePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [analysisData, setAnalysisData] = useState<DoodleAnalysis | null>(null);
   
+  // --- AI & API LOGIC ---
   const sendToAI = async () => {
     if (!canvasRef.current) return;
 
@@ -36,11 +41,12 @@ export default function DoodlePage() {
     const imageData = canvasRef.current.toDataURL("image/png");
 
     try {
+      const currentGuestId = getOrSetGuestId();
       const response = await fetch("/api/doodle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          guestId: localStorage.getItem("doodle_guest_id"),
+          guestId: currentGuestId,
           image: imageData, // We'll update the backend to handle this next
         }),
       });
@@ -58,6 +64,7 @@ const result = await response.json();
     }
   };
 
+// --- CANVAS ENGINE ---
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -100,9 +107,10 @@ const result = await response.json();
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
   };
 
+  // --- PAGE COMPONENT ---
   return (
     <div className="flex h-screen w-full bg-gray-200 overflow-hidden">
-      {/* Sidebar of Shame */}
+      {/* --- UI: SIDEBAR --- */}
       <div className="w-20 bg-white border-r border-gray-300 flex flex-col items-center py-8 gap-4 shadow-lg">
         {COLORS.map((c) => (
           <button
@@ -140,6 +148,7 @@ const result = await response.json();
         </button>
       </div>
 
+      {/* --- UI: CANVAS AREA --- */}
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
@@ -148,7 +157,8 @@ const result = await response.json();
         onMouseLeave={stopDrawing}
         className="cursor-crosshair bg-white"
       />
-      {/* THE AI DISPLAY STUFF */}
+
+    {/* --- UI: MODAL LAYER --- */}
     <FancyResultBox 
       isOpen={isModalOpen}
       isAnalyzing={isAnalyzing}
@@ -159,6 +169,7 @@ const result = await response.json();
   );
 }
 
+// --- COMPONENT: FANCY MODAL ---
 const FancyResultBox = ({ isOpen, isAnalyzing, data, onClose }: any) => {
   if (!isOpen) return null;
 
