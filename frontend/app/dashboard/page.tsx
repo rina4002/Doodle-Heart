@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getOrSetGuestId } from "@/lib/auth-utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DoodleHistoryItem {
   _id: string;
@@ -14,30 +15,41 @@ interface DoodleHistoryItem {
   createdAt: string;
 }
 
-export default function ParentDashboard() {
+export default function ParentDashboard() { 
   const [history, setHistory] = useState<DoodleHistoryItem[]>([]);
   const [insight, setInsight] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedDoodle, setSelectedDoodle] = useState<DoodleHistoryItem | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchHistory = async () => {
-      const gId = localStorage.getItem("doodle_guest_id");
+      // 1. Get the ID
+      const gId = getOrSetGuestId();
+      
       if (!gId) {
         setLoading(false);
         return;
       }
 
       try {
-        const gId = getOrSetGuestId();
-        if (gId) {
-        fetch(`/api/history/doodles?guestId=${gId}`)
-          .then(res => res.json())
-          .then(data => {
-              setHistory(data.history);
-              setInsight(data.insight);
-            }
-          );
+        const res = await fetch(`/api/history/doodles?guestId=${gId}`);
+        
+        // 2. Check if the server actually returned a "success" status
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
         }
+
+        // 3. Ensure the content type is JSON
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          console.error("Expected JSON but got:", text);
+          throw new Error("Server didn't send JSON");
+        }
+
+        const data = await res.json();
+        setHistory(data.history || []);
+        setInsight(data.insight || "");
       } catch (err) {
         console.error("Dashboard fetch error:", err);
       } finally {
@@ -46,8 +58,8 @@ export default function ParentDashboard() {
     };
 
     fetchHistory();
-  }, []);
 
+  }, []);
   if (loading) {
     return (
       <div className="min-h-screen bg-pink-50 flex items-center justify-center">
@@ -107,7 +119,9 @@ export default function ParentDashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {history.map((item) => (
-                <div key={item._id} className="bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border-2 border-white">
+                <div key={item._id} 
+                onClick={() => setSelectedDoodle(item)}
+                className="bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border-2 border-white">
                   <div className="aspect-square bg-gray-100 overflow-hidden">
                     <img src={item.image} alt="Doodle" className="w-full h-full object-cover" />
                   </div>
@@ -131,6 +145,80 @@ export default function ParentDashboard() {
         </div>
 
       </div>
+
+
+          {/* DETAIL MODAL */}
+<AnimatePresence>
+  {selectedDoodle && (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/60 backdrop-blur-lg"
+      onClick={() => setSelectedDoodle(null)} // Click outside to close
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+      >
+        {/* Left Side: Big Image */}
+        <div className="w-full md:w-1/2 bg-gray-50 flex items-center justify-center p-8">
+          <img 
+            src={selectedDoodle.image} 
+            alt="Full Doodle" 
+            className="max-w-full max-h-full rounded-2xl shadow-sm object-contain"
+          />
+        </div>
+
+        {/* Right Side: Full Analysis */}
+        <div className="w-full md:w-1/2 p-10 flex flex-col justify-between overflow-y-auto">
+          <div>
+            <div className="flex justify-between items-start mb-6">
+              <span className="bg-pink-500 text-white px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg">
+                Mood: {selectedDoodle.mood}
+              </span>
+              <button 
+                onClick={() => setSelectedDoodle(null)}
+                className="text-gray-300 hover:text-gray-500 text-2xl font-black"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <h3 className="text-3xl font-black text-purple-700 mb-4 tracking-tighter">AI Memory</h3>
+            <p className="text-gray-700 text-lg leading-relaxed font-medium mb-6 italic">
+              "{selectedDoodle.analysis}"
+            </p>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tags Identified</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedDoodle.tags?.map(tag => (
+                  <span key={tag} className="px-3 py-1 bg-blue-50 text-blue-500 border border-blue-100 rounded-lg text-xs font-bold">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setSelectedDoodle(null)}
+            className="mt-8 w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-lg transition-all shadow-[0_6px_0_rgb(126,34,206)] active:shadow-none active:translate-y-1"
+          >
+            CLOSE VIEW
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
+
     </div>
   );
 }

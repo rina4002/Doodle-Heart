@@ -35,10 +35,6 @@ export default function Header() {
         </Link>
 
         <div className="h-6 w-[1px] bg-gray-200 mx-2" />
-
-        <Link href="/billing" className="text-sm font-bold text-gray-500 hover:text-black">
-          Billing
-        </Link>
       </div>
     </header>
   );
