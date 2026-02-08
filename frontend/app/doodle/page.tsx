@@ -36,29 +36,37 @@ export default function DoodlePage() {
     if (!canvasRef.current) return;
 
     setIsAnalyzing(true);
-    setIsModalOpen(true); 
-
-    const imageData = canvasRef.current.toDataURL("image/png");
+    setIsModalOpen(true);
+    setAnalysisData(null); // Clear old data
 
     try {
+      const imageData = canvasRef.current.toDataURL("image/png");
       const currentGuestId = getOrSetGuestId();
+
       const response = await fetch("/api/doodle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          guestId: currentGuestId,
-          image: imageData, // We'll update the backend to handle this next
-        }),
+        body: JSON.stringify({ guestId: currentGuestId, image: imageData }),
       });
 
-const result = await response.json();
-    if (result.success) {
-      setAnalysisData(result.data); // result.data contains mood, analysis, etc.
-    } else {
-      // Handle the 429 error or other issues
-      setAnalysisData({ analysis: "Oh no! The Magic Sun is tired. Try again later!", mood: "Sleepy" });
-    }    } catch (error) {
-      console.error("The AI is ignoring you:", error);
+      if (!response.ok) {
+        // Handle 429 (Rate Limit) or 500 (Server Error)
+        throw new Error(response.status === 429 ? "RATE_LIMIT" : "SERVER_ERROR");
+      }
+
+      const result = await response.json();
+      setAnalysisData(result.data);
+
+    } catch (error: any) {
+      console.error("AI Error:", error);
+      
+      // Provide user-friendly feedback based on the error
+      setAnalysisData({
+        analysis: error.message === "RATE_LIMIT" 
+          ? "The Magic Sun is tired from all the art! Take a little break and try again in a minute." 
+          : "Oh no! A storm cloud blocked the Magic Sun. Try sending your doodle again!",
+        mood: "Cloudy",
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -69,15 +77,30 @@ const result = await response.json();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.width = window.innerWidth - 80;
-    canvas.height = window.innerHeight;
-
     const context = canvas.getContext("2d");
-    if (context) {
-      context.lineCap = "round";
-      context.lineWidth = 5; // Slightly thicker so the eraser actually works
-      setCtx(context);
-    }
+    if (!context) return;
+
+    // 1. Get the device pixel ratio (usually 2 or 3)
+    const dpr = window.devicePixelRatio || 1;
+    
+    // 2. Set the visual size (CSS pixels)
+    const displayWidth = window.innerWidth - 80;
+    const displayHeight = window.innerHeight;
+
+    // 3. Set the internal resolution (Physical pixels)
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+
+    // 4. Force the canvas back to the correct visual size
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+
+    // 5. Scale all future drawing operations by the DPR
+    context.scale(dpr, dpr);
+    
+    context.lineCap = "round";
+    context.lineWidth = 5;
+    setCtx(context);
   }, []);
 
   const startDrawing = (e: React.MouseEvent) => {
@@ -151,10 +174,10 @@ const result = await response.json();
       {/* --- UI: CANVAS AREA --- */}
       <canvas
         ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
+        onPointerDown={startDrawing}
+        onPointerMove={draw}
+        onPointerUp={stopDrawing}
+        onPointerLeave={stopDrawing}
         className="cursor-crosshair bg-white"
       />
 
@@ -184,7 +207,7 @@ const FancyResultBox = ({ isOpen, isAnalyzing, data, onClose }: any) => {
                 <span className="text-5xl">✨</span>
               </div>
               <h2 className="text-3xl font-black text-blue-600 italic">Thinking...</h2>
-              <p className="text-gray-400 mt-2 font-bold uppercase tracking-widest">The AI is looking at your art!</p>
+              <p className="text-gray-400 mt-2 font-bold uppercase tracking-widest">The Magic Sun is looking at your art!</p>
             </>
           ) : (
             <>

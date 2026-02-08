@@ -30,7 +30,7 @@ export default function ParentDashboard() {
       try {
         const gId = getOrSetGuestId();
         if (gId) {
-        fetch(`/api/history?guestId=${gId}`)
+        fetch(`/api/history/doodles?guestId=${gId}`)
           .then(res => res.json())
           .then(data => {
               setHistory(data.history);
