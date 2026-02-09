@@ -33,7 +33,12 @@ export default function Header() {
         >
           🎨 START DOODLING
         </Link>
-
+        <Link 
+          href="/onboarding/login" 
+          className="px-6 py-2 text-sm font-black border-b border-gray-300 text-black rounded-full hover:shadow-lg transition-all active:scale-95"
+        >
+          Logout
+        </Link>
         <div className="h-6 w-[1px] bg-gray-200 mx-2" />
       </div>
     </header>

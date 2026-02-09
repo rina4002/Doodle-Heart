@@ -1,0 +1,32 @@
+/* Floating background doodles */
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+.floating-doodle {
+    position: absolute;
+    font-size: 2rem;
+    opacity: 0.6;
+    animation: float 4s ease-in-out infinite;
+    z-index: 0;
+}
+
+/* Specific delays so they don't move in sync */
+.doodle-1 { top: 10%; left: 5%; animation-delay: 0s; }
+.doodle-2 { top: 15%; right: 10%; animation-delay: 1s; }
+.doodle-3 { bottom: 20%; left: 15%; animation-delay: 2s; }
+.doodle-4 { top: 50%; right: 5%; animation-delay: 1.5s; }
+.doodle-5 { bottom: 10%; right: 20%; animation-delay: 0.5s; }
+
+/* Sparkle animation for characters */
+@keyframes sparkle {
+    0%, 100% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+.sparkle {
+    position: absolute;
+    animation: sparkle 2s infinite;
+    font-size: 1.2rem;
+}
