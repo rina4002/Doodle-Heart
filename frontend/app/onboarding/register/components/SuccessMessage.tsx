@@ -12,7 +12,7 @@ export default function SuccessMessage({ username }: { username: string }) {
         adventure is about to begin.
       </p>
 
-      <Link href="/onboarding//login">
+      <Link href="/onboarding/login">
         <button className="mt-8 bg-blue-500 text-white font-bold py-4 px-10 rounded-full text-2xl shadow-lg hover:bg-blue-600 transition transform hover:scale-105">
           Go to Login 🚀
         </button>
