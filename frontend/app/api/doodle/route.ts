@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Craft a Prompt for Structured JSON
     const prompt = `
-      Analyze this child's drawing. Provide the response in strict JSON format:
+      Analyze this child's drawing, and in the description field, write a short, childish story about the image. Provide the response in strict JSON format:
       {
         "description": "What is in the drawing",
         "mood": "Happy, Sad, Anxious, Energetic, or Calm",
