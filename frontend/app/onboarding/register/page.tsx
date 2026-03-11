@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect for auto-redirect
+import { useRouter } from "next/navigation"; // The navigation engine
 import Step1Name from "./components/Step1Name";
 import Step2Email from "./components/Step2Email";
 import Step3Password from "./components/Step3Password";
@@ -7,6 +8,7 @@ import Step4Avatar from "./components/Step4Avatar";
 import SuccessMessage from "./components/SuccessMessage";
 
 export default function RegisterPage() {
+  const router = useRouter(); // Initialize the router
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false); // Added for robustness
   const [error, setError] = useState<string | null>(null); // Added to show failures
@@ -66,7 +68,6 @@ export default function RegisterPage() {
           {error}
         </div>
       )}
-
       {currentStep <= 4 && (
         <div className="mb-8">
           <div className="w-full bg-gray-200 rounded-full h-4">
@@ -77,7 +78,6 @@ export default function RegisterPage() {
           </div>
         </div>
       )}
-
       {currentStep === 1 && (
         <Step1Name data={formData} update={updateData} onNext={nextStep} />
       )}
@@ -97,7 +97,6 @@ export default function RegisterPage() {
           onBack={prevStep}
         />
       )}
-
       {/* Wire up the handleFinalSubmit here */}
       {currentStep === 4 && (
         <Step4Avatar
@@ -108,8 +107,12 @@ export default function RegisterPage() {
           isLoading={isLoading}
         />
       )}
-
-      {currentStep === 5 && <SuccessMessage username={formData.username} />}
+      {currentStep === 5 && (
+        <SuccessMessage
+          username={formData.username}
+          onFinish={() => router.push("/onboarding/pquiz")} // OPTION B: Manual button trigger
+        />
+      )}{" "}
     </div>
   );
 }

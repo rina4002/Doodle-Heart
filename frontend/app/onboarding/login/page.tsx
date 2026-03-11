@@ -104,7 +104,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className={`btn-gradient text-white font-extrabold py-5 px-10 rounded-full text-3xl transition-all ${isLoading ? "opacity-70 scale-95 cursor-not-allowed" : "hover:scale-105 active:scale-95"}`}
           >
-            {isLoading ? "Teleporting... ⚡" : "Continue ! 🚀"}
+            {isLoading ? "Teleporting... ⚡" : "Continue ! !!"}
           </button>
         </div>
       </form>
