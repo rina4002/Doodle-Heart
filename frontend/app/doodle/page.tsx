@@ -3,6 +3,7 @@
 import { getOrSetGuestId } from "@/lib/auth-utils";
 import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AICompanion, ChatMessage } from "@/components/AICompanion";
 
 
 // ==========================================
@@ -38,6 +39,7 @@ export default function DoodlePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [analysisData, setAnalysisData] = useState<DoodleAnalysis | null>(null);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   
   // ==========================================
   // SECTION 3: AI API LOGIC
@@ -57,7 +59,7 @@ export default function DoodlePage() {
       const response = await fetch("/api/doodle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestId: currentGuestId, image: imageData }),
+        body: JSON.stringify({ guestId: currentGuestId, image: imageData, chatHistory }),
       });
 
       if (!response.ok) {
@@ -147,6 +149,9 @@ export default function DoodlePage() {
   // SECTION 5: MAIN PAGE LAYOUT
   // Description: The Sidebar, Canvas container, and parent layout.
   // ==========================================
+
+  const cursorSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color === '#FFFFFF' ? '#000000' : color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>`;
+  const cursorUrl = \`url('data:image/svg+xml;utf8,\${encodeURIComponent(cursorSvg)}') 12 12, auto\`;
 
   return (
     <div className="flex h-screen w-full bg-gray-200 overflow-hidden">
@@ -247,7 +252,8 @@ export default function DoodlePage() {
         onPointerMove={draw}
         onPointerUp={stopDrawing}
         onPointerLeave={stopDrawing}
-        className="cursor-crosshair bg-white"
+        className="bg-white"
+        style={{ cursor: cursorUrl }}
       />
 
     {/* --- UI: MODAL LAYER --- */}
@@ -257,6 +263,8 @@ export default function DoodlePage() {
       data={analysisData}
       onClose={() => setIsModalOpen(false)}
     />
+    
+    <AICompanion chatHistory={chatHistory} setChatHistory={setChatHistory} />
     </div>
   );
 }

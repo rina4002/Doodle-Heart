@@ -8,9 +8,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { image, guestId } = await req.json(); // 1. Grab guestId from frontend
+    const { image, guestId, chatHistory } = await req.json(); // 1. Grab guestId and chatHistory from frontend
     console.log("📥 RECEIVED FROM FRONTEND:", {
       guestId: guestId,
+      hasChatHistory: !!chatHistory,
       imagePreview: image?.substring(0, 30) + "..."
     });
     if (!image) throw new Error("Image is required for analysis");
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
       sentimentScore: aiData.sentimentScore,
       colors: aiData.colors,
       tags: aiData.items,
+      conversation: chatHistory || [],
       guestId: guestId || null, // Keeping it flexible as requested
       childId: null             // Explicitly null for now
     });

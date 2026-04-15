@@ -25,7 +25,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // You'll likely want to store the token/user data in a context or cookie here later
+        localStorage.setItem("doodle_user", JSON.stringify(data.user));
         router.push("/");
       } else {
         setError(

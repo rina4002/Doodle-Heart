@@ -1,12 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("doodle_user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+  }, [pathname]); // Refresh when path changes
+
   const isActive = (path: string) => pathname === path;
+
+  const handleLogout = () => {
+    localStorage.removeItem("doodle_user");
+    setUser(null);
+    router.push("/onboarding/login");
+  };
 
   return (
     <header className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 border-b border-gray-300 bg-white sticky top-0 z-50">
@@ -43,12 +59,26 @@ export default function Header() {
           <span className="hidden md:inline">🎨 START DOODLING</span>
         </Link>
 
-        <Link
-          href="/onboarding/login"
-          className="px-3 md:px-6 py-2 text-xs md:text-sm font-black text-black border-b border-gray-300 md:border-none rounded-full hover:bg-gray-50 transition-all"
-        >
-          Logout
-        </Link>
+        {user && (
+          <span className="hidden md:inline text-xs font-bold text-gray-500">
+            {user.email}
+          </span>
+        )}
+        {user ? (
+          <button
+            onClick={handleLogout}
+            className="px-3 md:px-6 py-2 text-xs md:text-sm font-black text-black border-b border-gray-300 md:border-none rounded-full hover:bg-gray-50 transition-all cursor-pointer"
+          >
+            Logout
+          </button>
+        ) : (
+          <Link
+            href="/onboarding/login"
+            className="px-3 md:px-6 py-2 text-xs md:text-sm font-black text-black border border-gray-300 rounded-full hover:bg-gray-50 transition-all"
+          >
+            Login
+          </Link>
+        )}
       </div>
     </header>
   );
