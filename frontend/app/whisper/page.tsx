@@ -65,7 +65,6 @@ export default function WhisperPage() {
 
       const utterance = new SpeechSynthesisUtterance(word);
       // Extremely low rates (like 0.5) can cause the Windows TTS engine to stretch audio and sound muffled or distorted. 
-      // 0.85 is a safe, slightly slower speed.
       utterance.rate = 0.7;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
