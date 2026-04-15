@@ -1,4 +1,4 @@
-import { Paintbrush, BookOpen, BarChart3, Palette, Heart } from "lucide-react";
+import { Paintbrush, BookOpen, BarChart3, Palette, Heart, Volume2 } from "lucide-react";
 import { FeatureCard } from "@/components/FeatureCard";
 import { AnalyticsPreview } from "@/components/AnalyticsPreview";
 import Link from "next/link";
@@ -20,6 +20,14 @@ export default function LandingPage() {
       bgColor: "bg-purple-100",
       iconColor: "text-purple-600",
       link: "/doodle"
+    },
+    {
+      title: "Whisper & Repeat",
+      description: "App gently whispers simple words, building speech confidence slowly.",
+      Icon: Volume2,
+      bgColor: "bg-green-100",
+      iconColor: "text-green-600",
+      link: "/whisper"
     },
     {
       title: "Parental Insights",

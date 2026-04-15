@@ -40,6 +40,9 @@ export default function Header() {
           <NavLink href="/dashboard" active={isActive("/dashboard")}>
             Parent Stats
           </NavLink>
+          <NavLink href="/whisper" active={isActive("/whisper")}>
+            Whisper
+          </NavLink>
           <NavLink href="/color-wheel" active={isActive("/color-wheel")}>
             Color Wheel
           </NavLink>
