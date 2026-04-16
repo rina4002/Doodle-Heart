@@ -20,6 +20,10 @@ const DoodleSchema = new mongoose.Schema({
     required: false
   },
   tags: [String],
+  conversation: [{
+    role: String,
+    text: String
+  }],
   createdAt: { type: Date, default: Date.now },
 });
 

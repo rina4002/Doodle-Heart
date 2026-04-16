@@ -1,4 +1,4 @@
-import { Paintbrush, BookOpen, BarChart3, Palette, Heart } from "lucide-react";
+import { Paintbrush, BookOpen, BarChart3, Palette, Heart, Volume2 } from "lucide-react";
 import { FeatureCard } from "@/components/FeatureCard";
 import { AnalyticsPreview } from "@/components/AnalyticsPreview";
 import Link from "next/link";
@@ -20,6 +20,14 @@ export default function LandingPage() {
       bgColor: "bg-purple-100",
       iconColor: "text-purple-600",
       link: "/doodle"
+    },
+    {
+      title: "Whisper & Repeat",
+      description: "App gently whispers simple words, building speech confidence slowly.",
+      Icon: Volume2,
+      bgColor: "bg-green-100",
+      iconColor: "text-green-600",
+      link: "/whisper"
     },
     {
       title: "Parental Insights",
@@ -46,6 +54,9 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/doodle" className="px-8 py-4 bg-pink-600 text-white rounded-full font-bold text-lg hover:bg-pink-700 transition-all shadow-lg shadow-pink-200">
               Start Doodling
+            </Link>
+            <Link href="/emotions" className="px-8 py-4 bg-orange-500 text-white rounded-full font-bold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-200">
+              Act Emotions
             </Link>
             <Link href="/dashboard" className="px-8 py-4 bg-white border-2 border-zinc-200 rounded-full font-bold text-lg hover:border-pink-300 transition-all">
               Parent Dashboard

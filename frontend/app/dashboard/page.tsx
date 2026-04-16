@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Paintbrush, BookOpen, BarChart3, Palette, Heart, Volume2, Camera } from "lucide-react";
 import Link from "next/link";
 import { getOrSetGuestId } from "@/lib/auth-utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,17 +16,18 @@ interface DoodleHistoryItem {
   createdAt: string;
 }
 
-export default function ParentDashboard() { 
+export default function ParentDashboard() {
   const [history, setHistory] = useState<DoodleHistoryItem[]>([]);
+  const [emotionLogs, setEmotionLogs] = useState<any[]>([]);
   const [insight, setInsight] = useState("");
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"doodles" | "emotions">("doodles");
   const [selectedDoodle, setSelectedDoodle] = useState<DoodleHistoryItem | null>(null);
 
-useEffect(() => {
-    const fetchHistory = async () => {
-      // 1. Get the ID
+  useEffect(() => {
+    const fetchData = async () => {
       const gId = getOrSetGuestId();
-      
+
       if (!gId) {
         setLoading(false);
         return;
@@ -33,13 +35,11 @@ useEffect(() => {
 
       try {
         const res = await fetch(`/api/history/doodles?guestId=${gId}`);
-        
-        // 2. Check if the server actually returned a "success" status
+
         if (!res.ok) {
           throw new Error(`Server responded with ${res.status}`);
         }
 
-        // 3. Ensure the content type is JSON
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           const text = await res.text();
@@ -50,6 +50,13 @@ useEffect(() => {
         const data = await res.json();
         setHistory(data.history || []);
         setInsight(data.insight || "");
+
+        const emRes = await fetch(`/api/emotions?guestId=${gId}`);
+        if (emRes.ok) {
+          const emData = await emRes.json();
+          setEmotionLogs(emData.logs || []);
+        }
+
       } catch (err) {
         console.error("Dashboard fetch error:", err);
       } finally {
@@ -57,7 +64,7 @@ useEffect(() => {
       }
     };
 
-    fetchHistory();
+    fetchData();
 
   }, []);
   if (loading) {
@@ -78,16 +85,24 @@ useEffect(() => {
           </h1>
           <p className="text-purple-400 font-bold uppercase tracking-widest text-sm">Parent Dashboard</p>
         </div>
-        <Link 
-          href="/doodle" 
-          className="bg-white px-8 py-3 rounded-2xl font-black text-purple-600 shadow-[0_5px_0_rgb(233,213,255)] hover:translate-y-1 hover:shadow-none transition-all"
-        >
-          ← BACK TO DRAWING
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/whisper" className="bg-green-500 text-white px-6 py-3 rounded-2xl font-black shadow-[0_5px_0_rgb(21,128,61)] hover:translate-y-1 hover:shadow-none transition-all">
+            Whisper
+          </Link>
+          <Link href="/emotions" className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-black shadow-[0_5px_0_rgb(194,65,12)] hover:translate-y-1 hover:shadow-none transition-all">
+            Act Emotions
+          </Link>
+          <Link
+            href="/doodle"
+            className="bg-white px-8 py-3 rounded-2xl font-black text-purple-600 shadow-[0_5px_0_rgb(233,213,255)] hover:translate-y-1 hover:shadow-none transition-all"
+          >
+            ← BACK TO DRAWING
+          </Link>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* INSIGHT CARD */}
         <div className="lg:col-span-1">
           <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border-4 border-purple-100 sticky top-12">
@@ -98,124 +113,177 @@ useEffect(() => {
               {insight || "No doodles analyzed yet! Go draw something magical."}
             </div>
             <div className="mt-8">
-              <h3 className="font-black text-gray-400 uppercase text-xs tracking-widest mb-4">Current Mood Trend</h3>
+              <h3 className="font-black text-gray-400 uppercase text-xs tracking-widest mb-4">Face Mimic Attempts</h3>
               <div className="flex gap-2 flex-wrap">
-                {Array.from(new Set(history.slice(0, 10).map(d => d.mood))).map(m => (
-                  <span key={m} className="px-4 py-1 bg-pink-100 text-pink-600 rounded-full font-bold text-xs">
-                    {m}
-                  </span>
-                ))}
+                <span className="px-4 py-1 bg-green-100 text-green-600 rounded-full font-bold text-xs border border-green-200">
+                  {emotionLogs.filter(e => e.success).length} Succeeds 🤩
+                </span>
+                <span className="px-4 py-1 bg-orange-100 text-orange-600 rounded-full font-bold text-xs border border-orange-200">
+                  {emotionLogs.filter(e => !e.success).length} Tries 🔄
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         {/* HISTORY GRID */}
-        <div className="lg:col-span-2">
-          {history.length === 0 ? (
-            <div className="bg-white/50 border-4 border-dashed border-purple-200 rounded-[2.5rem] p-20 text-center">
-              <p className="text-purple-300 font-bold text-xl">The gallery is empty... for now!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {history.map((item) => (
-                <div key={item._id} 
-                onClick={() => setSelectedDoodle(item)}
-                className="bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border-2 border-white">
-                  <div className="aspect-square bg-gray-100 overflow-hidden">
-                    <img src={item.image} alt="Doodle" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-black text-[10px] uppercase">
-                        {item.mood}
-                      </span>
-                      <span className="text-gray-400 text-[10px] font-bold">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </span>
+        <div className="lg:col-span-2 flex flex-col">
+
+          {/* TABS */}
+          <div className="flex bg-white/50 p-1 rounded-full w-max mb-6 border border-purple-100">
+            <button
+              onClick={() => setViewMode("doodles")}
+              className={`px-6 py-2 rounded-full font-bold text-sm transition-all ${viewMode === "doodles" ? "bg-white text-purple-600 shadow-sm" : "text-gray-500 hover:text-purple-400"}`}
+            >
+              Art History
+            </button>
+            <button
+              onClick={() => setViewMode("emotions")}
+              className={`px-6 py-2 rounded-full font-bold text-sm transition-all ${viewMode === "emotions" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-orange-400"}`}
+            >
+              Emotion Mimic Logs
+            </button>
+          </div>
+
+          {viewMode === "doodles" && (
+            history.length === 0 ? (
+              <div className="bg-white/50 border-4 border-dashed border-purple-200 rounded-[2.5rem] p-20 text-center">
+                <p className="text-purple-300 font-bold text-xl">The gallery is empty... for now!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {history.map((item) => (
+                  <div key={item._id}
+                    onClick={() => setSelectedDoodle(item)}
+                    className="bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-shadow border-2 border-white">
+                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                      <img src={item.image} alt="Doodle" className="w-full h-full object-cover" />
                     </div>
-                    <p className="text-gray-700 text-sm leading-snug line-clamp-3 font-medium">
-                      {item.analysis}
-                    </p>
+                    <div className="p-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-black text-[10px] uppercase">
+                          {item.mood}
+                        </span>
+                        <span className="text-gray-400 text-[10px] font-bold">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 text-sm leading-snug line-clamp-3 font-medium">
+                        {item.analysis}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ))}
+
+          {viewMode === "emotions" && (
+            emotionLogs.length === 0 ? (
+              <div className="bg-white/50 border-4 border-dashed border-orange-200 rounded-[2.5rem] p-20 text-center">
+                <p className="text-orange-400 font-bold text-xl">No emotions acted yet. Head to "Act Emotions"!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {emotionLogs.map(log => (
+                  <div key={log._id} className="bg-white p-6 rounded-[2rem] shadow-md border border-gray-100 flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                      {log.image ? (
+                        <img src={log.image} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">😎</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-black text-gray-800 text-lg">{log.targetEmotion}</span>
+                        {log.success ? (
+                          <span className="text-green-500 text-xs font-bold border border-green-200 bg-green-50 px-2 py-0.5 rounded-full">Pass</span>
+                        ) : (
+                          <span className="text-orange-500 text-xs font-bold border border-orange-200 bg-orange-50 px-2 py-0.5 rounded-full">Try</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mb-1">{new Date(log.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium italic text-gray-600">"{log.notes}"</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
 
       </div>
 
 
-          {/* DETAIL MODAL */}
-<AnimatePresence>
-  {selectedDoodle && (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/60 backdrop-blur-lg"
-      onClick={() => setSelectedDoodle(null)} // Click outside to close
-    >
-      <motion.div 
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-      >
-        {/* Left Side: Big Image */}
-        <div className="w-full md:w-1/2 bg-gray-50 flex items-center justify-center p-8">
-          <img 
-            src={selectedDoodle.image} 
-            alt="Full Doodle" 
-            className="max-w-full max-h-full rounded-2xl shadow-sm object-contain"
-          />
-        </div>
-
-        {/* Right Side: Full Analysis */}
-        <div className="w-full md:w-1/2 p-10 flex flex-col justify-between overflow-y-auto">
-          <div>
-            <div className="flex justify-between items-start mb-6">
-              <span className="bg-pink-500 text-white px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg">
-                Mood: {selectedDoodle.mood}
-              </span>
-              <button 
-                onClick={() => setSelectedDoodle(null)}
-                className="text-gray-300 hover:text-gray-500 text-2xl font-black"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <h3 className="text-3xl font-black text-purple-700 mb-4 tracking-tighter">AI Memory</h3>
-            <p className="text-gray-700 text-lg leading-relaxed font-medium mb-6 italic">
-              "{selectedDoodle.analysis}"
-            </p>
-
-            <div className="space-y-4">
-              <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tags Identified</h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedDoodle.tags?.map(tag => (
-                  <span key={tag} className="px-3 py-1 bg-blue-50 text-blue-500 border border-blue-100 rounded-lg text-xs font-bold">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setSelectedDoodle(null)}
-            className="mt-8 w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-lg transition-all shadow-[0_6px_0_rgb(126,34,206)] active:shadow-none active:translate-y-1"
+      {/* DETAIL MODAL */}
+      <AnimatePresence>
+        {selectedDoodle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/60 backdrop-blur-lg"
+            onClick={() => setSelectedDoodle(null)} // Click outside to close
           >
-            CLOSE VIEW
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+            >
+              {/* Left Side: Big Image */}
+              <div className="w-full md:w-1/2 bg-gray-50 flex items-center justify-center p-8">
+                <img
+                  src={selectedDoodle.image}
+                  alt="Full Doodle"
+                  className="max-w-full max-h-full rounded-2xl shadow-sm object-contain"
+                />
+              </div>
+
+              {/* Right Side: Full Analysis */}
+              <div className="w-full md:w-1/2 p-10 flex flex-col justify-between overflow-y-auto">
+                <div>
+                  <div className="flex justify-between items-start mb-6">
+                    <span className="bg-pink-500 text-white px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg">
+                      Mood: {selectedDoodle.mood}
+                    </span>
+                    <button
+                      onClick={() => setSelectedDoodle(null)}
+                      className="text-gray-300 hover:text-gray-500 text-2xl font-black"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <h3 className="text-3xl font-black text-purple-700 mb-4 tracking-tighter">AI Memory</h3>
+                  <p className="text-gray-700 text-lg leading-relaxed font-medium mb-6 italic">
+                    "{selectedDoodle.analysis}"
+                  </p>
+
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tags Identified</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDoodle.tags?.map(tag => (
+                        <span key={tag} className="px-3 py-1 bg-blue-50 text-blue-500 border border-blue-100 rounded-lg text-xs font-bold">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSelectedDoodle(null)}
+                  className="mt-8 w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-lg transition-all shadow-[0_6px_0_rgb(126,34,206)] active:shadow-none active:translate-y-1"
+                >
+                  CLOSE VIEW
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
 

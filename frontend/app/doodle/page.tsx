@@ -3,6 +3,7 @@
 import { getOrSetGuestId } from "@/lib/auth-utils";
 import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AICompanion, ChatMessage } from "@/components/AICompanion";
 
 
 // ==========================================
@@ -38,7 +39,8 @@ export default function DoodlePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [analysisData, setAnalysisData] = useState<DoodleAnalysis | null>(null);
-  
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+
   // ==========================================
   // SECTION 3: AI API LOGIC
   // Description: Handles image conversion and server-side analysis calls.
@@ -57,7 +59,7 @@ export default function DoodlePage() {
       const response = await fetch("/api/doodle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestId: currentGuestId, image: imageData }),
+        body: JSON.stringify({ guestId: currentGuestId, image: imageData, chatHistory }),
       });
 
       if (!response.ok) {
@@ -70,11 +72,11 @@ export default function DoodlePage() {
 
     } catch (error: any) {
       console.error("AI Error:", error);
-      
+
       // Provide user-friendly feedback based on the error
       setAnalysisData({
-        analysis: error.message === "RATE_LIMIT" 
-          ? "The Magic Sun is tired from all the art! Take a little break and try again in a minute." 
+        analysis: error.message === "RATE_LIMIT"
+          ? "The Magic Sun is tired from all the art! Take a little break and try again in a minute."
           : "Oh no! A storm cloud blocked the Magic Sun. Try sending your doodle again!",
         mood: "Cloudy",
       });
@@ -96,7 +98,7 @@ export default function DoodlePage() {
 
     // 1. Get the device pixel ratio (usually 2 or 3)
     const dpr = window.devicePixelRatio || 1;
-    
+
     // 2. Set the visual size (CSS pixels)
     const displayWidth = window.innerWidth - 80;
     const displayHeight = window.innerHeight;
@@ -111,7 +113,7 @@ export default function DoodlePage() {
 
     // 5. Scale all future drawing operations by the DPR
     context.scale(dpr, dpr);
-    
+
     context.lineCap = "round";
     context.lineWidth = 5;
     setCtx(context);
@@ -148,60 +150,63 @@ export default function DoodlePage() {
   // Description: The Sidebar, Canvas container, and parent layout.
   // ==========================================
 
+  const cursorSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color === '#FFFFFF' ? '#000000' : color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>`;
+  const cursorUrl = `url('data:image/svg+xml;utf8,${encodeURIComponent(cursorSvg)}') 12 12, auto`;
+
   return (
     <div className="flex h-screen w-full bg-gray-200 overflow-hidden">
-{/* --- UI: SIDEBAR (THE ART BOX) --- */}
+      {/* --- UI: SIDEBAR (THE ART BOX) --- */}
       <div className="w-28 bg-white border-r-4 border-yellow-400 flex flex-col items-center py-6 gap-6 shadow-2xl z-10 relative">
-{/* Crayon Container */}
-<div className="flex flex-col gap-4 w-full items-start">
-  {COLORS.filter(c => c.name !== "Eraser").map((c) => (
-    <motion.button
-      key={c.hex}
-      onClick={() => setColor(c.hex)}
-      // Use initial to force the starting position deep to the left
-      initial={{ x: -45 }} 
-      whileHover={{ x: -35 }} // Pulls out slightly on hover
-      animate={{ 
-        // When selected, it pops out to show the tip. 
-        // When not selected, it stays mostly hidden (-45)
-        x: color === c.hex ? -5 : -45, 
-      }}
-      transition={{ type: "spring", stiffness: 250, damping: 25 }}
-      className="relative group flex items-center"
-      // This ensures the button itself is positioned off-canvas to the left
-      style={{ position: 'relative', left: '0px' }} 
-    >
-      {/* Crayon Body */}
-      <div 
-        className="w-24 h-10 rounded-r-full rounded-l-none shadow-lg border-r-8 border-black/10 relative overflow-hidden"
-        style={{ 
-          backgroundColor: c.hex,
-          // This shadow makes it look like it's coming out of a slot
-          boxShadow: "inset 10px 0 10px rgba(0,0,0,0.2)" 
-        }}
-      >
-        {/* 3D Shine & Shadow */}
-        <div className="absolute top-1.5 left-0 w-full h-1.5 bg-white/30 rounded-full" />
-        <div className="absolute bottom-1.5 left-0 w-full h-2.5 bg-black/10 rounded-full" />
-        
-        {/* Crayon Wrapper Detail */}
-        <div className="absolute inset-y-2 left-10 w-6 border-x-2 border-black/10 flex items-center justify-center">
-           <div className="w-full h-[2px] bg-black/5" />
-        </div>
-      </div>
+        {/* Crayon Container */}
+        <div className="flex flex-col gap-4 w-full items-start">
+          {COLORS.filter(c => c.name !== "Eraser").map((c) => (
+            <motion.button
+              key={c.hex}
+              onClick={() => setColor(c.hex)}
+              // Use initial to force the starting position deep to the left
+              initial={{ x: -45 }}
+              whileHover={{ x: -35 }} // Pulls out slightly on hover
+              animate={{
+                // When selected, it pops out to show the tip. 
+                // When not selected, it stays mostly hidden (-45)
+                x: color === c.hex ? -5 : -45,
+              }}
+              transition={{ type: "spring", stiffness: 250, damping: 25 }}
+              className="relative group flex items-center"
+              // This ensures the button itself is positioned off-canvas to the left
+              style={{ position: 'relative', left: '0px' }}
+            >
+              {/* Crayon Body */}
+              <div
+                className="w-24 h-10 rounded-r-full rounded-l-none shadow-lg border-r-8 border-black/10 relative overflow-hidden"
+                style={{
+                  backgroundColor: c.hex,
+                  // This shadow makes it look like it's coming out of a slot
+                  boxShadow: "inset 10px 0 10px rgba(0,0,0,0.2)"
+                }}
+              >
+                {/* 3D Shine & Shadow */}
+                <div className="absolute top-1.5 left-0 w-full h-1.5 bg-white/30 rounded-full" />
+                <div className="absolute bottom-1.5 left-0 w-full h-2.5 bg-black/10 rounded-full" />
 
-      {/* Label - Adjusted position so it doesn't move too much with the crayon */}
-      <span className="ml-4 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none font-black uppercase tracking-tighter transition-opacity">
-        {c.name}
-      </span>
-    </motion.button>
-  ))}
-</div>
+                {/* Crayon Wrapper Detail */}
+                <div className="absolute inset-y-2 left-10 w-6 border-x-2 border-black/10 flex items-center justify-center">
+                  <div className="w-full h-[2px] bg-black/5" />
+                </div>
+              </div>
+
+              {/* Label - Adjusted position so it doesn't move too much with the crayon */}
+              <span className="ml-4 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none font-black uppercase tracking-tighter transition-opacity">
+                {c.name}
+              </span>
+            </motion.button>
+          ))}
+        </div>
         {/* The Pink Eraser - Also Horizontal */}
         <motion.button
           onClick={() => setColor("#FFFFFF")}
           whileHover={{ x: 10 }}
-          animate={{ 
+          animate={{
             x: color === "#FFFFFF" ? 20 : 0,
             boxShadow: color === "#FFFFFF" ? "0px 4px 15px rgba(236, 72, 153, 0.4)" : "none"
           }}
@@ -238,8 +243,8 @@ export default function DoodlePage() {
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Start Over</span>
         </motion.button>
       </div>
-      
-      
+
+
       {/* --- UI: CANVAS AREA --- */}
       <canvas
         ref={canvasRef}
@@ -247,16 +252,19 @@ export default function DoodlePage() {
         onPointerMove={draw}
         onPointerUp={stopDrawing}
         onPointerLeave={stopDrawing}
-        className="cursor-crosshair bg-white"
+        className="bg-white"
+        style={{ cursor: cursorUrl }}
       />
 
-    {/* --- UI: MODAL LAYER --- */}
-    <FancyResultBox 
-      isOpen={isModalOpen}
-      isAnalyzing={isAnalyzing}
-      data={analysisData}
-      onClose={() => setIsModalOpen(false)}
-    />
+      {/* --- UI: MODAL LAYER --- */}
+      <FancyResultBox
+        isOpen={isModalOpen}
+        isAnalyzing={isAnalyzing}
+        data={analysisData}
+        onClose={() => setIsModalOpen(false)}
+      />
+
+      <AICompanion chatHistory={chatHistory} setChatHistory={setChatHistory} />
     </div>
   );
 }
@@ -272,7 +280,7 @@ const FancyResultBox = ({ isOpen, isAnalyzing, data, onClose }: any) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/20 backdrop-blur-md">
       <div className="bg-white rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] w-full max-w-lg border-[12px] border-yellow-400 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
         <div className="p-10 flex flex-col items-center text-center">
-          
+
           {isAnalyzing ? (
             <>
               <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center animate-bounce mb-6">

@@ -9,4 +9,4 @@ export const getOrSetGuestId = (): string => {
     localStorage.setItem("doodle_guest_id", id);
   }
   return id;
-};1
+};
